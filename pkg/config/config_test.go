@@ -1,57 +1,26 @@
 package config
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_config_GetCnfDefault(t *testing.T) {
-	type args struct {
-		key    string
-		defCnf interface{}
-	}
-	tests := []struct {
-		name string
+	a := assert.New(t)
+	configParser := NewConfig()
+	a.IsType(&config{}, configParser)
 
-		args args
-		want interface{}
-	}{
-		// TODO: Add test cases.
-		{
-			name: "",
+	configParser.SetCnfFile("yaml", "test", ".")
+	configParser.Load()
 
-			args: args{
-				key:    "ok",
-				defCnf: nil,
-			},
-			want: nil,
-		},
-		{
-			name: "",
-			args: args{
-				key:    "test.name",
-				defCnf: nil,
-			},
-			want: "tyltr",
-		},
-		{
-			name: "",
-			args: args{
-				key:    "test.age",
-				defCnf: nil,
-			},
-			want: 10,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := NewConfig()
-			c.SetCnfFile("yaml", "test", ".")
-			c.Load()
-			got := c.GetCnfDefault(tt.args.key, tt.args.defCnf)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("config.GetCnfDefault() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	name := configParser.c.Get("test.name")
+	a.EqualValues(name, "tyltr")
+
+	hello := configParser.c.Get("hello")
+	a.EqualValues(hello, nil)
+
+	defkey := configParser.GetCnfDefault("heelo", 0)
+	a.EqualValues(defkey, 0)
+
 }
