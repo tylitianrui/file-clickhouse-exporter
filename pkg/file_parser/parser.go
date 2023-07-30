@@ -2,7 +2,11 @@ package file_parser
 
 import "sync"
 
+var DefaultParserController = NewParserController()
+
 type Parser interface {
+	SetFormatString(s string) error
+	Parse(s string) map[string]string
 }
 
 type ParserController struct {
@@ -26,4 +30,11 @@ func (pc *ParserController) RemoveParser(k string) {
 	pc.mu.Lock()
 	defer pc.mu.Unlock()
 	delete(pc.allParsers, k)
+}
+
+func (pc *ParserController) GetParser(k string) (Parser, bool) {
+	pc.mu.RLock()
+	defer pc.mu.RUnlock()
+	p, exist := pc.allParsers[k]
+	return p, exist
 }
