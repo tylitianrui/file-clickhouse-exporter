@@ -47,4 +47,5 @@ type Credentials struct {
 type Setting struct {
 	FilePath         string `yaml:"file_path" mapstructure:"file_path"`
 	MaxlineEveryRead int    `yaml:"max_line_every_read" mapstructure:"max_line_every_read"`
+	Interval         int    `yaml:"interval" mapstructure:"interval"`
 }

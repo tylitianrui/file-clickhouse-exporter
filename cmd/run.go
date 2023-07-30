@@ -71,7 +71,7 @@ var runCmd = &cobra.Command{
 		var finish bool
 
 		for {
-			time.Sleep(1 * time.Millisecond)
+			time.Sleep(time.Duration(config.C.Setting.Interval) * time.Millisecond)
 			vals := [][]interface{}{}
 			for i := 0; i < config.C.Setting.MaxlineEveryRead; i++ {
 				b, err := reader.ReadLine()
