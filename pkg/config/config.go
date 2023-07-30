@@ -8,7 +8,7 @@ var C Config
 
 type Config struct {
 	Clickhouse Clickhouse
-	File       File
+	Setting    Setting
 }
 
 var regexstr = regexp.MustCompile(`(\$\d+)\((\w+)\)`)
@@ -44,6 +44,7 @@ type Credentials struct {
 	Password string `json:"password,omitempty" yaml:"password" gorm:"password" mapstructure:"password"`
 }
 
-type File struct {
-	Path string `json:"path,omitempty" yaml:"path" gorm:"path" mapstructure:"path"`
+type Setting struct {
+	FilePath         string `yaml:"file_path" mapstructure:"file_path"`
+	MaxlineEveryRead int    `yaml:"max_line_every_read" mapstructure:"max_line_every_read"`
 }

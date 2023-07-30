@@ -1,6 +1,6 @@
 clickhouse:
   db: metrics
-  table: access_log
+  table: engine_log2
   host: localhost
   port: 9000
   credentials:
@@ -12,7 +12,9 @@ clickhouse:
     uid: $3(int32)
     market: $4 
 
-file:
-  path: /Users/ollie/Desktop/gate/fu/tt.log
+
+setting:
+  file_path: /Users/ollie/Desktop/gate/fu/all.log
+  max_line_every_read: 200
 
     

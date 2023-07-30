@@ -38,13 +38,13 @@ var runCmd = &cobra.Command{
 		cnf.UnmarshalKey("clickhouse", &clickhouse)
 		config.C.Clickhouse = clickhouse
 
-		file := config.File{}
-		cnf.UnmarshalKey("file", &file)
-		config.C.File = file
+		setting := config.Setting{}
+		cnf.UnmarshalKey("setting", &setting)
+		config.C.Setting = setting
 		fmt.Println("config load [ok]")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		reader, err := xfile.NewFileReader(config.C.File.Path)
+		reader, err := xfile.NewFileReader(config.C.Setting.FilePath)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -71,9 +71,9 @@ var runCmd = &cobra.Command{
 		var finish bool
 
 		for {
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(1 * time.Millisecond)
 			vals := [][]interface{}{}
-			for i := 0; i < 43; i++ {
+			for i := 0; i < config.C.Setting.MaxlineEveryRead; i++ {
 				b, err := reader.ReadLine()
 				if err != nil {
 					if err == io.EOF {
@@ -107,7 +107,7 @@ var runCmd = &cobra.Command{
 				}
 				vals = append(vals, val)
 			}
-			err = repo.BatchInsert(context.Background(), "engine_log1", columns, vals, true)
+			err = repo.BatchInsert(context.Background(), config.C.Clickhouse.Table, columns, vals, true)
 			if err != nil {
 				fmt.Println(err)
 			}
