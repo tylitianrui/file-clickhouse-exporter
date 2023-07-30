@@ -9,7 +9,7 @@ import (
 func TestFileParser_Parse(t *testing.T) {
 
 	a := assert.New(t)
-	s := "    1 2    你 3 4  "
+	s := "    1 2    你 3 4  \n\r"
 	fp := &FileParser{}
 
 	err := fp.SetFormatString("$1   $2$3")
