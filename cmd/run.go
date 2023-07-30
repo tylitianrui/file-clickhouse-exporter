@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/tylitianrui/file-clickhouse-exporter/pkg/config"
@@ -65,18 +66,22 @@ var runCmd = &cobra.Command{
 		}
 
 		columns, index, types := config.C.Clickhouse.BuildColumns()
-		vals := [][]interface{}{}
+
 		fileParser.SetFormat(index)
+		var finish bool
 
 		for {
-			for i := 0; i < 10; i++ {
+			time.Sleep(10 * time.Millisecond)
+			vals := [][]interface{}{}
+			for i := 0; i < 43; i++ {
 				b, err := reader.ReadLine()
 				if err != nil {
 					if err == io.EOF {
 						fmt.Println("finish")
+						finish = true
 						break
 					}
-					fmt.Println(err)
+					fmt.Println("err", err)
 					continue
 				}
 				res := fileParser.Parse(string(b))
@@ -103,7 +108,13 @@ var runCmd = &cobra.Command{
 				vals = append(vals, val)
 			}
 			err = repo.BatchInsert(context.Background(), "engine_log1", columns, vals, true)
-			fmt.Println(err)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			if finish {
+				return
+			}
 		}
 
 	},

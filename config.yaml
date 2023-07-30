@@ -13,6 +13,6 @@ clickhouse:
     market: $4 
 
 file:
-  path: /Users/ollie/Desktop/gate/fu/all.log
+  path: /Users/ollie/Desktop/gate/fu/tt.log
 
     
