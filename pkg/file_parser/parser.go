@@ -6,7 +6,9 @@ var DefaultParserController = NewParserController()
 
 type Parser interface {
 	SetFormatString(s string) error
+	SetFormat([]string) error
 	Parse(s string) map[string]string
+	ParseColumns(idx []string, s string) []string
 }
 
 type ParserController struct {

@@ -31,4 +31,14 @@ func TestFileParser_Parse(t *testing.T) {
 		"$100": "",
 	}
 	a.Equal(expect, res)
+
+	err = fp.SetFormat([]string{"$2", "$4"})
+	a.NoError(err)
+	res = fp.Parse(s)
+	expect = map[string]string{
+		"$4": "3",
+		"$2": "2",
+	}
+	a.Equal(expect, res)
+
 }

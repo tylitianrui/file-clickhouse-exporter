@@ -11,6 +11,10 @@ var (
 	reg = regexp.MustCompile(`\s+`)
 )
 
+func init() {
+	DefaultParserController.RegisterParser("file", &FileParser{})
+}
+
 type FileParser struct {
 	formatString []string
 	idx          []int
@@ -39,6 +43,30 @@ func (fp *FileParser) SetFormatString(s string) error {
 	return nil
 }
 
+func (fp *FileParser) SetFormat(format_list []string) error {
+	idx := make([]int, len(format_list))
+	for i := 0; i < len(format_list); i++ {
+		format := strings.ReplaceAll(format_list[i], " ", "")
+		if len(format) <= 1 {
+			return errors.New("format:err " + format)
+		}
+		formatidx := format[1:]
+		index, err := strconv.Atoi(formatidx)
+		if err != nil {
+			return err
+		}
+		if index < 0 {
+			return errors.New("$i:i >= 0")
+		}
+		idx[i] = index
+		format_list[i] = format
+
+	}
+	fp.formatString = format_list
+	fp.idx = idx
+	return nil
+}
+
 func (fp *FileParser) Parse(s string) map[string]string {
 	s = strings.Trim(s, " ")
 	result := reg.Split(s, -1)
@@ -56,4 +84,9 @@ func (fp *FileParser) Parse(s string) map[string]string {
 
 	}
 	return res
+}
+
+func (fp *FileParser) ParseColumns(idx []string, s string) []string {
+	panic("")
+
 }

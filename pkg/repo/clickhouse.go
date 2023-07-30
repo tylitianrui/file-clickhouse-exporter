@@ -58,7 +58,7 @@ func (cr *ClickhouseRepo) Ping(ctx context.Context) error {
 	return cr.conn.Ping(ctx)
 }
 
-func (cr *ClickhouseRepo) batchInsert(ctx context.Context, table string, columns []string, vals [][]interface{}, async bool) error {
+func (cr *ClickhouseRepo) BatchInsert(ctx context.Context, table string, columns []string, vals [][]interface{}, async bool) error {
 	insertSql := fmt.Sprintf("INSERT INTO %s.%s (%s)", cr.config.DB, table, strings.Join(columns, ","))
 	batch, err := cr.conn.PrepareBatch(context.Background(), insertSql)
 	if err != nil {

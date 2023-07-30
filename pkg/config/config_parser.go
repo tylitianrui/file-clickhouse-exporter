@@ -34,12 +34,8 @@ func Default() *config {
 	return defaultConfig
 }
 
-func (c *config) SetCnfFile(fType, name string, paths ...string) {
-	c.c.SetConfigType(fType)
-	c.c.SetConfigName(name)
-	for _, path := range paths {
-		c.c.AddConfigPath(path)
-	}
+func (c *config) SetCnfFileName(filename string) {
+	c.c.SetConfigFile(filename)
 }
 
 func (c *config) Load() error {

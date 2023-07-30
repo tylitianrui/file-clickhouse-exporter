@@ -17,7 +17,8 @@ func Test_config_GetCnfDefault(t *testing.T) {
 	configParser := NewConfig()
 	a.IsType(&config{}, configParser)
 
-	configParser.SetCnfFile("yaml", "../../test/test", ".")
+	configParser.SetCnfFileName("../../test/test.yaml")
+	// configParser.SetCnfFile("yaml", "../../test/test", ".")
 	configParser.Load()
 
 	name := configParser.c.Get("test.name")
