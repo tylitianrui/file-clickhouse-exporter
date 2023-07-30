@@ -39,6 +39,6 @@ func TestNewClickhouseRepo(t *testing.T) {
 
 	item0 := []interface{}{"hello", []uint8{1, 2, 3}}
 	item1 := []interface{}{"hello2", []uint8{4, 5, 6}}
-	err = conn.batchInsert(context.TODO(), "benchmark", []string{"Col2", "Col3"}, [][]interface{}{item0, item1}, false)
+	err = conn.BatchInsert(context.TODO(), "benchmark", []string{"Col2", "Col3"}, [][]interface{}{item0, item1}, false)
 	a.NoError(err)
 }
