@@ -25,3 +25,7 @@ func NewFileReader(filename string) (*FileReader, error) {
 func (fr *FileReader) ReadLine() ([]byte, error) {
 	return fr.reader.ReadBytes('\n')
 }
+
+func (fr *FileReader) Reader() *bufio.Reader {
+	return fr.reader
+}

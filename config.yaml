@@ -17,5 +17,6 @@ setting:
   file_path: /Users/ollie/Desktop/gate/fu/all.log
   max_line_every_read: 200
   interval: 10  # in milliseconds(ms)
+  mode: follower
 
     
