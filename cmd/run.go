@@ -103,6 +103,8 @@ var runCmd = &cobra.Command{
 					case "int64":
 						vint := type_transfer.String2Int64(v)
 						val = append(val, vint)
+					case "string":
+						fallthrough
 					default:
 						val = append(val, v)
 					}
