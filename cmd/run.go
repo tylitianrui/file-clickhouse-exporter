@@ -94,6 +94,9 @@ var runCmd = &cobra.Command{
 					case "time":
 						vtime := type_transfer.String2Time(v)
 						val = append(val, vtime)
+					case "time_utc":
+						vtime := type_transfer.String2TimeUTC(v)
+						val = append(val, vtime)
 					case "int32":
 						vint := type_transfer.String2Int32(v)
 						val = append(val, vint)

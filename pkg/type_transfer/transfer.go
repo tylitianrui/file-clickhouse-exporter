@@ -23,3 +23,8 @@ func String2UInt64(s string) uint64 {
 func String2Time(s string) time.Time {
 	return cast.ToTime(s)
 }
+
+func String2TimeUTC(s string) time.Time {
+	t, _ := cast.ToTimeE(s)
+	return t.UTC()
+}
