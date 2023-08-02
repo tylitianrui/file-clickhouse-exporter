@@ -93,6 +93,16 @@ var runCmd = &cobra.Command{
 				val := []interface{}{}
 				for idx, _ := range preprocessing.Columns {
 					v := res[preprocessing.Index[idx]]
+					split := preprocessing.Split[idx]
+					f := split[0]
+					t := split[1]
+					if f != 0 && t != -1 {
+						v = v[f:t]
+					} else if f != 0 {
+						v = v[f:]
+					} else if t != -1 {
+						v = v[:t]
+					}
 					typ := preprocessing.Types[idx]
 					switch typ {
 					case "time":
