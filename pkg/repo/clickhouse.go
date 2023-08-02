@@ -30,7 +30,7 @@ func NewClickhouseRepo(config ClickhouseRepoConfig) (*ClickhouseRepo, error) {
 		Auth: clickhouse.Auth{
 			Database: config.DB,
 			Username: config.User,
-			Password: "",
+			Password: config.Password,
 		},
 		DialTimeout:     50 * time.Second,
 		MaxOpenConns:    10,
