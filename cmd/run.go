@@ -65,9 +65,13 @@ var runCmd = &cobra.Command{
 			return
 		}
 
-		columns, index, types := config.C.Clickhouse.BuildColumns()
+		preprocessing, err := config.C.Clickhouse.BuildColumns()
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
 
-		fileParser.SetFormat(index)
+		fileParser.SetFormat(preprocessing.Index)
 		var finish bool
 
 		for {
@@ -87,9 +91,9 @@ var runCmd = &cobra.Command{
 				res := fileParser.Parse(string(b))
 
 				val := []interface{}{}
-				for idx, _ := range columns {
-					v := res[index[idx]]
-					typ := types[idx]
+				for idx, _ := range preprocessing.Columns {
+					v := res[preprocessing.Index[idx]]
+					typ := preprocessing.Types[idx]
 					switch typ {
 					case "time":
 						vtime := type_transfer.String2Time(v)
@@ -112,7 +116,7 @@ var runCmd = &cobra.Command{
 				}
 				vals = append(vals, val)
 			}
-			err = repo.BatchInsert(context.Background(), config.C.Clickhouse.Table, columns, vals, true)
+			err = repo.BatchInsert(context.Background(), config.C.Clickhouse.Table, preprocessing.Columns, vals, true)
 			if err != nil {
 				fmt.Println(err)
 			}
