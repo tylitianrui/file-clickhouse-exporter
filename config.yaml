@@ -1,5 +1,5 @@
 clickhouse:
-  db: metrics
+  db: default
   table: engine_log2
   host: localhost
   port: 9000
@@ -7,8 +7,8 @@ clickhouse:
     user: default
     password:
   columns:
-    time: $1(time)
-    action: $2
+    time: $1[:2](time)
+    action: $2[0:1]
     uid: $3(int32)
     market: $4 
 

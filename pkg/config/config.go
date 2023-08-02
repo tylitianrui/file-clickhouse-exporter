@@ -1,7 +1,10 @@
 package config
 
 import (
+	"errors"
+	"fmt"
 	"regexp"
+	"strconv"
 )
 
 var C Config
@@ -11,7 +14,7 @@ type Config struct {
 	Setting    Setting
 }
 
-var regexstr = regexp.MustCompile(`(\$\d+)\((\w+)\)`)
+var regexstr = regexp.MustCompile(`(\$\d+)(\[(\d*):(\d*)\])?(\((\w+)\))?`)
 
 type Clickhouse struct {
 	DB          string            `json:"db,omitempty" yaml:"db" gorm:"db" mapstructure:"db"`
@@ -22,20 +25,81 @@ type Clickhouse struct {
 	Columns     map[string]string `json:"columns,omitempty" yaml:"columns" gorm:"columns" mapstructure:"columns"`
 }
 
-func (c *Clickhouse) BuildColumns() (columns []string, index []string, types []string) {
-	for column, idx := range c.Columns {
+type Preprocessing struct {
+	Columns []string
+	Index   []string
+	Split   [][]int
+	Types   []string
+}
+
+func (c *Clickhouse) BuildColumns() (preprocessing *Preprocessing, err error) {
+	var (
+		columns   []string = make([]string, len(c.Columns))
+		index     []string = make([]string, len(c.Columns))
+		str_split [][]int  = make([][]int, len(c.Columns))
+		types     []string = make([]string, len(c.Columns))
+	)
+	columns = columns[:0]
+	index = index[:0]
+	str_split = str_split[:0]
+	types = types[:0]
+
+	for column, format_str := range c.Columns {
 		columns = append(columns, column)
-		substr := regexstr.FindStringSubmatch(idx)
-		if len(substr) == 3 {
-			index = append(index, substr[1])
-			types = append(types, substr[2])
+		substr := regexstr.FindStringSubmatch(format_str)
+		if len(substr) != 7 {
+			return nil, errors.New("Syntax Error: column: " + column + " format:" + format_str)
+
+		}
+		fmt.Println("parse column: " + column + " format:" + format_str)
+		idx := substr[1]
+		split := substr[2]
+		split_from := substr[3]
+		split_to := substr[4]
+		trans := substr[5]
+		trans_type := substr[6]
+		from, to := 0, -1
+		if len(split) > 0 {
+			if len(split_from) > 0 {
+				from, err = strconv.Atoi(split_from)
+				if err != nil {
+					msg := fmt.Sprintf("Syntax Error [%s :%s] `[int1:int2]`: expect int ,but got %s", column, format_str, split_from)
+					return nil, errors.New(msg)
+				}
+
+			}
+			if len(split_to) > 0 {
+				to, err = strconv.Atoi(split_to)
+				if err != nil {
+					msg := fmt.Sprintf("Syntax Error [%s :%s] `[int1:int2]`: expect int ,but got %s", column, format_str, split_from)
+					return nil, errors.New(msg)
+				}
+
+			}
+		}
+		if len(trans) > 0 {
+			if len(trans_type) == 0 {
+				msg := fmt.Sprintf("Syntax Error [%s :%s] `(type)`: expect a type ,but got %s", column, format_str, trans_type)
+				return nil, errors.New(msg)
+			}
 		} else {
-			index = append(index, idx)
-			types = append(types, "string")
+			trans_type = "string"
 		}
 
+		index = append(index, idx)
+		types = append(types, trans_type)
+		str_split = append(str_split, []int{from, to})
+		fmt.Println("")
+
 	}
-	return
+
+	preprocessing = &Preprocessing{
+		Columns: columns,
+		Index:   index,
+		Split:   str_split,
+		Types:   types,
+	}
+	return preprocessing, nil
 
 }
 

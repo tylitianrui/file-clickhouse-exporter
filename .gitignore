@@ -20,3 +20,12 @@ vendor/
 
 # Go workspace file
 go.work
+
+store/
+tmp/
+user_*/
+preprocessed_configs/
+metadata/
+metadata_dropped/
+data/
+
