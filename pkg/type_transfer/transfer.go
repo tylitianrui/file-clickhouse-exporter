@@ -21,10 +21,11 @@ func String2UInt64(s string) uint64 {
 	return cast.ToUint64(s)
 }
 func String2Time(s string) time.Time {
-	return cast.ToTime(s)
+	t, _ := StringToTimeWithLocation(s, time.Local)
+	return t
 }
 
 func String2TimeUTC(s string) time.Time {
-	t, _ := cast.ToTimeE(s)
-	return t.UTC()
+	t, _ := StringToTimeWithLocation(s, time.UTC)
+	return t
 }
