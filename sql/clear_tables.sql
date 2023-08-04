@@ -1,1 +1,1 @@
-truncate table metrics.engine_log1;
+truncate table default.record;

@@ -1,13 +1,10 @@
 CREATE TABLE
-    engine_log1(
+    record(
         id UUID NOT NULL COMMENT 'Primary KEY',
         time DateTime COMMENT 'time',
-      
+        time_utc DateTime COMMENT 'time_utc',
+        name String COMMENT 'String',
         action String COMMENT 'action',
-
-        uid Int32 COMMENT 'uid',
-        market  String COMMENT 'market',
-
-    
+        duration Int32 COMMENT 'duration',
     ) ENGINE = MergeTree()
 ORDER BY (id) PRIMARY KEY(id) COMMENT '';
