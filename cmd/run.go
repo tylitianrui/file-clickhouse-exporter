@@ -128,12 +128,11 @@ var runCmd = &cobra.Command{
 			}
 			err = repo.BatchInsert(context.Background(), config.C.Clickhouse.Table, preprocessing.Columns, vals, true)
 			if err != nil {
-				fmt.Println("[err] err:",err)
-				fmt.Println(fmt.Sprintf("[failure] saved %d rows ",len(vals)))
-			}else {
-				fmt.Println(fmt.Sprintf("[success] saved %d rows ",len(vals)))
+				fmt.Println("[err] err:", err)
+				fmt.Println(fmt.Sprintf("[failure] saved %d rows ", len(vals)))
+			} else {
+				fmt.Println(fmt.Sprintf("[success] saved %d rows ", len(vals)))
 			}
-			
 
 			if finish {
 				return
