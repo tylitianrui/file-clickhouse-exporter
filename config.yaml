@@ -1,6 +1,6 @@
 clickhouse:
   db: default
-  table: engine_log2
+  table: record
   host: localhost
   port: 9000
   credentials:
@@ -8,13 +8,14 @@ clickhouse:
     password:
   columns:
     time: $1(time)
-    action: $3[1:](string)
-    uid: $4(int32)
-    market: $5
+    time_utc: $1(time_utc)
+    name: $3[6:](string)
+    action: $2
+    duration: $4[3:](int32)
 
 
 setting:
-  file_path: test.log
+  file_path: ./test/demo.log
   max_line_every_read: 200
   interval: 10  # in milliseconds(ms)
 
