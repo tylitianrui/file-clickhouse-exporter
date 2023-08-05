@@ -36,7 +36,7 @@ var runCmd = &cobra.Command{
 
 		clickhouse := config.ClickHouse{}
 		cnf.UnmarshalKey("clickhouse", &clickhouse)
-		config.C.Clickhouse = clickhouse
+		config.C.ClickHouse = clickhouse
 
 		setting := config.Setting{}
 		cnf.UnmarshalKey("setting", &setting)
@@ -53,11 +53,11 @@ var runCmd = &cobra.Command{
 			fileParser = &file_parser.FileParser{}
 		}
 		clickhouseConf := repo.ClickhouseRepoConfig{
-			Host:     config.C.Clickhouse.Host,
-			Port:     config.C.Clickhouse.Port,
-			DB:       config.C.Clickhouse.DB,
-			User:     config.C.Clickhouse.Credentials.User,
-			Password: config.C.Clickhouse.Credentials.Password,
+			Host:     config.C.ClickHouse.Host,
+			Port:     config.C.ClickHouse.Port,
+			DB:       config.C.ClickHouse.DB,
+			User:     config.C.ClickHouse.Credentials.User,
+			Password: config.C.ClickHouse.Credentials.Password,
 		}
 		repo, err := repo.NewClickhouseRepo(clickhouseConf)
 		if err != nil {
@@ -65,7 +65,7 @@ var runCmd = &cobra.Command{
 			return
 		}
 
-		preprocessing, err := config.C.Clickhouse.BuildColumns()
+		preprocessing, err := config.C.ClickHouse.BuildColumns()
 		if err != nil {
 			fmt.Println(err.Error())
 			return
@@ -126,7 +126,7 @@ var runCmd = &cobra.Command{
 				}
 				vals = append(vals, val)
 			}
-			err = repo.BatchInsert(context.Background(), config.C.Clickhouse.Table, preprocessing.Columns, vals, true)
+			err = repo.BatchInsert(context.Background(), config.C.ClickHouse.Table, preprocessing.Columns, vals, true)
 			if err != nil {
 				fmt.Println("[err] err:", err)
 				fmt.Println(fmt.Sprintf("[failure] saved %d rows ", len(vals)))

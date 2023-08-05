@@ -10,7 +10,7 @@ import (
 var C Config
 
 type Config struct {
-	Clickhouse ClickHouse
+	ClickHouse ClickHouse
 	Setting    Setting
 }
 
