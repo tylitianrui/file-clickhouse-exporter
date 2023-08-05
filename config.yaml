@@ -9,9 +9,11 @@ clickhouse:
   columns:
     time: $1(time)
     time_utc: $1(time_utc)
-    name: $3[6:](string)
+    name: aggregation.key1
     action: $2
     duration: $4[3:](int32)
+  aggregation:
+    key1: $2+" "+$3
 
 
 setting:

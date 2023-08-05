@@ -34,7 +34,7 @@ var runCmd = &cobra.Command{
 			panic(err)
 		}
 
-		clickhouse := config.Clickhouse{}
+		clickhouse := config.ClickHouse{}
 		cnf.UnmarshalKey("clickhouse", &clickhouse)
 		config.C.Clickhouse = clickhouse
 

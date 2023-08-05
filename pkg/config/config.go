@@ -10,19 +10,20 @@ import (
 var C Config
 
 type Config struct {
-	Clickhouse Clickhouse
+	Clickhouse ClickHouse
 	Setting    Setting
 }
 
 var regexstr = regexp.MustCompile(`(\$\d+)(\[(\d*):(\d*)\])?(\((\w+)\))?`)
 
-type Clickhouse struct {
+type ClickHouse struct {
 	DB          string            `json:"db,omitempty" yaml:"db" gorm:"db" mapstructure:"db"`
 	Table       string            `json:"table,omitempty" yaml:"table" gorm:"table" mapstructure:"table"`
 	Host        string            `json:"host,omitempty" yaml:"host" gorm:"host" mapstructure:"host"`
 	Port        int               `json:"port,omitempty" yaml:"port" gorm:"port" mapstructure:"port"`
 	Credentials Credentials       `json:"credentials,omitempty" yaml:"credentials" gorm:"credentials" mapstructure:"credentials"`
 	Columns     map[string]string `json:"columns,omitempty" yaml:"columns" gorm:"columns" mapstructure:"columns"`
+	Aggregation map[string]string `json:"aggregation,omitempty" yaml:"aggregation" gorm:"aggregation" mapstructure:"aggregation"`
 }
 
 type Preprocessing struct {
@@ -32,7 +33,7 @@ type Preprocessing struct {
 	Types   []string
 }
 
-func (c *Clickhouse) BuildColumns() (preprocessing *Preprocessing, err error) {
+func (c *ClickHouse) BuildColumns() (preprocessing *Preprocessing, err error) {
 	var (
 		columns   []string = make([]string, len(c.Columns))
 		index     []string = make([]string, len(c.Columns))
