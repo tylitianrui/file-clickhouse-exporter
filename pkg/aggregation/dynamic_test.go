@@ -1,4 +1,4 @@
-package preprocessing
+package aggregation
 
 import (
 	"testing"

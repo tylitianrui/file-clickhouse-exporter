@@ -5,6 +5,8 @@ go 1.20
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.12.0
 	github.com/mitchellh/mapstructure v1.1.2
+	github.com/satori/go.uuid v1.2.0
+	github.com/spf13/cast v1.3.0
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.8.4
@@ -30,7 +32,6 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/afero v1.1.2 // indirect
-	github.com/spf13/cast v1.3.0 // indirect
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
