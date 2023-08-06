@@ -1,10 +1,12 @@
 package preprocessing
 
 import (
+	"fmt"
 	"regexp"
 	"sync"
 
 	"github.com/tylitianrui/file-clickhouse-exporter/pkg/aggregation"
+	"github.com/tylitianrui/file-clickhouse-exporter/pkg/collector"
 )
 
 const (
@@ -15,11 +17,10 @@ const (
 )
 
 var (
+	preprocessingTyps = []string{PreprocessorAggregation, PreprocessorStatic, PreprocessorDynamic}
 	regexColumns      = regexp.MustCompile(`((\$\d+)|((aggregation)|(static)|(dynamic))\.(\w*))(\((\w*)\))?`)
 	columnsAggregator = aggregation.NewAggregation(regexColumns)
 )
-
-type ProcessorLogic map[string]string
 
 type Preprocessor interface {
 	SetReadColumns(columns []string)
@@ -45,22 +46,23 @@ type Preprocessor interface {
 */
 // Preprocessor
 type Preprocessing struct {
-	rawColumns []string                     // raw configuration. eg:$1(time_utc),aggregation.key1
-	readIndex  map[string]map[string]string // map[raw] = { map[$1] = time_utc} ,map[aggregation] = { map[key1] = string}
-	processors map[string]ProcessorLogic
-	mu         sync.Mutex
+	rawColumns               []string                     // raw configuration. eg:$1(time_utc),aggregation.key1
+	readInxFromPreprocessing map[string]map[string]string // map[raw] = { map[$1] = time_utc} ,map[aggregation] = { map[key1] = string}
+	processingConfiguration  map[string]map[string]string // processing configuration
+	readIdxFromFile          []string
+	mu                       sync.Mutex
 }
 
 func NewPreprocessor() *Preprocessing {
 	preprocessor := &Preprocessing{
 		rawColumns: []string{},
-		readIndex: map[string]map[string]string{
+		readInxFromPreprocessing: map[string]map[string]string{
 			PreprocessorRaw:         {},
 			PreprocessorAggregation: {},
 			PreprocessorStatic:      {},
 			PreprocessorDynamic:     {},
 		},
-		processors: map[string]ProcessorLogic{},
+		processingConfiguration: map[string]map[string]string{},
 	}
 	return preprocessor
 }
@@ -80,15 +82,18 @@ func (p *Preprocessing) SetReadColumns(columns []string) {
 	p.rawColumns = append(p.rawColumns[:0], columns...)
 }
 
-func (p *Preprocessing) SetProcessorLogic(name string, logic map[string]string) {
+func (p *Preprocessing) SetProcessing(processing map[string]map[string]string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.processors[name] = logic
+	p.processingConfiguration = processing
 }
 
 func (p *Preprocessing) Load() {
+	strJoinAggregation := aggregation.NewStrJoinAggregation()
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	set := collector.NewSet()
+	// 加载数据索引
 	for _, v := range p.rawColumns {
 		res := columnsAggregator.Parse(v)
 		if len(res) == 0 {
@@ -106,10 +111,47 @@ func (p *Preprocessing) Load() {
 			columnType = "string"
 		}
 		if len(rawKey) > 0 {
-			p.readIndex[PreprocessorRaw][rawKey] = columnType
+			p.readInxFromPreprocessing[PreprocessorRaw][rawKey] = columnType
+			set.Add(rawKey)
 
 		} else if len(preprocessingSource) > 0 {
-			p.readIndex[preprocessingSource][preprocessingSourceKey] = columnType
+			p.readInxFromPreprocessing[preprocessingSource][preprocessingSourceKey] = columnType
 		}
+	}
+
+	// 检查 期望读取的预处理数据是否在配置中
+	for _, preprocessingTyp := range preprocessingTyps {
+		for expectKey, _ := range p.readInxFromPreprocessing[preprocessingTyp] {
+			var contain bool
+			for containKey, _ := range p.readInxFromPreprocessing[preprocessingTyp] {
+				if containKey == expectKey {
+					contain = true
+				}
+
+			}
+			if !contain {
+				msg := fmt.Sprintf("configuration[%s] does not  contain key[%s]", PreprocessorAggregation, expectKey)
+				panic(msg)
+			}
+		}
+	}
+
+	// 配置中存在aggregation 并且会在aggregation中读取数据
+	aggregations, ok := p.processingConfiguration[PreprocessorAggregation]
+	if ok && len(p.readInxFromPreprocessing[PreprocessorAggregation]) > 0 {
+		for k, v := range aggregations {
+			if _, exist := p.readInxFromPreprocessing[PreprocessorAggregation][k]; exist {
+				configs := strJoinAggregation.Parse(v)
+				for _, config := range configs {
+					idx := config[2]
+					set.Add(idx)
+				}
+			}
+		}
+	}
+
+	p.readIdxFromFile = p.readIdxFromFile[:0]
+	for _, item := range set.AllItems() {
+		p.readIdxFromFile = append(p.readIdxFromFile, item.(string))
 	}
 }

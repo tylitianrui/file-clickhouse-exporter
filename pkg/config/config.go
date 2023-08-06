@@ -19,13 +19,13 @@ var regexstr = regexp.MustCompile(`(\$\d+)(\[(\d*):(\d*)\])?(\((\w+)\))?`)
 type PreprocessingConfig map[string]string
 
 type ClickHouse struct {
-	DB            string                         `json:"db,omitempty" yaml:"db" gorm:"db" mapstructure:"db"`
-	Table         string                         `json:"table,omitempty" yaml:"table" gorm:"table" mapstructure:"table"`
-	Host          string                         `json:"host,omitempty" yaml:"host" gorm:"host" mapstructure:"host"`
-	Port          int                            `json:"port,omitempty" yaml:"port" gorm:"port" mapstructure:"port"`
-	Credentials   Credentials                    `json:"credentials,omitempty" yaml:"credentials" gorm:"credentials" mapstructure:"credentials"`
-	Columns       map[string]string              `json:"columns,omitempty" yaml:"columns" gorm:"columns" mapstructure:"columns"`
-	Preprocessing map[string]PreprocessingConfig `json:"preprocessing,omitempty" yaml:"preprocessing" gorm:"preprocessing" mapstructure:"preprocessing"`
+	DB            string                       `json:"db,omitempty" yaml:"db" gorm:"db" mapstructure:"db"`
+	Table         string                       `json:"table,omitempty" yaml:"table" gorm:"table" mapstructure:"table"`
+	Host          string                       `json:"host,omitempty" yaml:"host" gorm:"host" mapstructure:"host"`
+	Port          int                          `json:"port,omitempty" yaml:"port" gorm:"port" mapstructure:"port"`
+	Credentials   Credentials                  `json:"credentials,omitempty" yaml:"credentials" gorm:"credentials" mapstructure:"credentials"`
+	Columns       map[string]string            `json:"columns,omitempty" yaml:"columns" gorm:"columns" mapstructure:"columns"`
+	Preprocessing map[string]map[string]string `json:"preprocessing,omitempty" yaml:"preprocessing" gorm:"preprocessing" mapstructure:"preprocessing"`
 }
 
 type Preprocessing struct {

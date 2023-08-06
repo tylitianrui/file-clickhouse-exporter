@@ -10,10 +10,20 @@ clickhouse:
     time: $1(time)
     time_utc: $1(time_utc)
     name: aggregation.key1
+    tags: static.a(int32)
     action: $2
-    duration: $4[3:](int32)
-  aggregation:
-    key1: $2+" "+$3
+    duration: $4(int32)
+    id: dynamic.id(int32)
+  Preprocessing:
+    aggregation:
+      key1: $2+" "+$3
+      $4: $4[3:]
+      $5: $4
+    static:
+      a: 1
+    dynamic:
+      id: gen_uuid()
+
 
 
 setting:
