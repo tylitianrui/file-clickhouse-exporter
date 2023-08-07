@@ -1,12 +1,21 @@
 package preprocessing
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"regexp"
 	"sync"
+	"time"
 
 	"github.com/tylitianrui/file-clickhouse-exporter/pkg/aggregation"
 	"github.com/tylitianrui/file-clickhouse-exporter/pkg/collector"
+	"github.com/tylitianrui/file-clickhouse-exporter/pkg/file_parser"
+	"github.com/tylitianrui/file-clickhouse-exporter/pkg/xfile"
+)
+
+const (
+	BuffSize = 1 << 6
 )
 
 const (
@@ -50,6 +59,9 @@ type Preprocessing struct {
 	readInxFromPreprocessing map[string]map[string]string // map[raw] = { map[$1] = time_utc} ,map[aggregation] = { map[key1] = string}
 	processingConfiguration  map[string]map[string]string // processing configuration
 	readIdxFromFile          []string
+	reader                   *xfile.FileReader  // file  reader
+	parser                   file_parser.Parser // content  parser
+	content                  chan map[string]string
 	mu                       sync.Mutex
 }
 
@@ -63,8 +75,24 @@ func NewPreprocessor() *Preprocessing {
 			PreprocessorDynamic:     {},
 		},
 		processingConfiguration: map[string]map[string]string{},
+		content:                 make(chan map[string]string, BuffSize),
 	}
 	return preprocessor
+}
+
+// SetFile 设置文件和解析类型.
+func (p *Preprocessing) SetFile(fileName string, parserType string) error {
+	reader, err := xfile.NewFileReader(fileName)
+	if err != nil {
+		return err
+	}
+	p.reader = reader
+	parser, exist := file_parser.DefaultParserController.GetParser(parserType)
+	if !exist {
+		return errors.New("parser[" + parserType + "] does not  exist")
+	}
+	p.parser = parser
+	return nil
 }
 
 func (p *Preprocessing) SetColumns(columns map[string]string) {
@@ -154,4 +182,31 @@ func (p *Preprocessing) Load() {
 	for _, item := range set.AllItems() {
 		p.readIdxFromFile = append(p.readIdxFromFile, item.(string))
 	}
+}
+
+func (p *Preprocessing) ColumnsIndex() []string {
+	return p.readIdxFromFile
+}
+
+func (p *Preprocessing) readFromFile(interval time.Duration) {
+	p.parser.SetFormat(p.ColumnsIndex())
+	for {
+		time.Sleep(interval)
+		b, err := p.reader.ReadLine()
+		if err != nil {
+			if err == io.EOF {
+				close(p.content)
+				break
+			}
+		}
+		res := p.parser.Parse(string(b))
+		// 预处理
+
+		p.content <- res
+	}
+}
+
+func (p *Preprocessing) Read(interval time.Duration) chan map[string]string {
+	go p.readFromFile(interval)
+	return p.content
 }
