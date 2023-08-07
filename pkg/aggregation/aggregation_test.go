@@ -9,9 +9,9 @@ import (
 
 func TestAggregation_ALL(t *testing.T) {
 	a := assert.New(t)
-	strJoinaggregation := NewStrJoinAggregation()
+	strJoinAggregation := NewStrJoinAggregation()
 	demo1 := "$3[3:3]+\"   \"+$4[:4]+$5[:5]+\"he\"+$6[6:6]"
-	res1 := strJoinaggregation.Parse(demo1)
+	res1 := strJoinAggregation.Parse(demo1)
 	expected1 := [][]string{
 		{"$3[3:3]+\"   \"+", "$3[3:3]+\"   \"+", "$3", "[3:3]", "3", "3", "+\"   \"+", "   "},
 		{"$4[:4]", "$4[:4]", "$4", "[:4]", "", "4", "", ""},

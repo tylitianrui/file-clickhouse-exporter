@@ -26,9 +26,10 @@ const (
 )
 
 var (
-	preprocessingTyps = []string{PreprocessorAggregation, PreprocessorStatic, PreprocessorDynamic}
-	regexColumns      = regexp.MustCompile(`((\$\d+)|((aggregation)|(static)|(dynamic))\.(\w*))(\((\w*)\))?`)
-	columnsAggregator = aggregation.NewAggregation(regexColumns)
+	preprocessingTyps  = []string{PreprocessorAggregation, PreprocessorStatic, PreprocessorDynamic}
+	regexColumns       = regexp.MustCompile(`((\$\d+)|((aggregation)|(static)|(dynamic))\.(\w*))(\((\w*)\))?`)
+	columnsAggregator  = aggregation.NewAggregation(regexColumns)
+	strJoinAggregation = aggregation.NewStrJoinAggregation()
 )
 
 type Preprocessor interface {
@@ -60,8 +61,9 @@ type Preprocessing struct {
 	processingConfiguration  map[string]map[string]string // processing configuration
 	readIdxFromFile          []string
 	reader                   *xfile.FileReader  // file  reader
-	parser                   file_parser.Parser // content  parser
+	parser                   file_parser.Parser // content parser
 	content                  chan map[string]string
+	aggregation              map[string][]string
 	mu                       sync.Mutex
 }
 
@@ -76,6 +78,7 @@ func NewPreprocessor() *Preprocessing {
 		},
 		processingConfiguration: map[string]map[string]string{},
 		content:                 make(chan map[string]string, BuffSize),
+		aggregation:             make(map[string][]string),
 	}
 	return preprocessor
 }
@@ -117,7 +120,6 @@ func (p *Preprocessing) SetProcessing(processing map[string]map[string]string) {
 }
 
 func (p *Preprocessing) Load() {
-	strJoinAggregation := aggregation.NewStrJoinAggregation()
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	set := collector.NewSet()
@@ -170,10 +172,16 @@ func (p *Preprocessing) Load() {
 		for k, v := range aggregations {
 			if _, exist := p.readInxFromPreprocessing[PreprocessorAggregation][k]; exist {
 				configs := strJoinAggregation.Parse(v)
+				aggregation := []string{}
 				for _, config := range configs {
 					idx := config[2]
+					from := config[4]
+					to := config[5]
+					joinstr := config[7]
+					aggregation = append(aggregation, idx, from, to, joinstr)
 					set.Add(idx)
 				}
+				p.aggregation[k] = aggregation
 			}
 		}
 	}

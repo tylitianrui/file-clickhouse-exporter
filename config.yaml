@@ -16,7 +16,7 @@ clickhouse:
     id: dynamic.id(int32)
   Preprocessing:
     aggregation:
-      key1: $2+" "+$3
+      key1: $2[1:3]+"$key "+$3[:2]
       $4: $4[3:]
       $5: $4
     static:
