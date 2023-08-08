@@ -16,11 +16,12 @@ var (
 	caselist = []string{txta, txtb, txtc, txtd, txtc, txtd, txtc, txtd, txtc, txtd, txtc, txtd, ""}
 )
 
-func TestFileReader_ReadLine(t *testing.T) {
+func TestStaticFileReader_ALL(t *testing.T) {
 	a := assert.New(t)
-	filename := "../../test/test_read_line"
+	filename := "../../test/test_static_file"
 	reader, err := NewStaticFileReader(filename)
 	a.NoError(err)
+	a.Implements((*XReader)(nil), reader)
 	ctx, cancel := context.WithCancel(context.Background())
 	content := reader.ReadLines(ctx)
 
