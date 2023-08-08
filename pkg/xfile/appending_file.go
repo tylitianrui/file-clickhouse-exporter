@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 	"time"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 const AppendingFileReaderBuffSize = 1 << 4
@@ -20,6 +22,7 @@ type AppendingFileAppendReader struct {
 	fd            *os.File
 	reader        *bufio.Reader
 	fileLines     chan FileLineGetter
+	watcher       *fsnotify.Watcher
 }
 
 func NewAppendingFileAppendReader(filename string) (XReader, error) {
@@ -27,12 +30,19 @@ func NewAppendingFileAppendReader(filename string) (XReader, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	bufioReader := bufio.NewReader(fd)
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, err
+	}
 
 	afr := &AppendingFileAppendReader{
 		fd:        fd,
 		reader:    bufioReader,
 		fileLines: make(chan FileLineGetter, AppendingFileReaderBuffSize),
+		watcher:   watcher,
 	}
 	return afr, nil
 }
@@ -47,6 +57,8 @@ func (afr *AppendingFileAppendReader) readLines(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			close(afr.fileLines)
+			afr.watcher.Close()
+			afr.fd.Close()
 			return
 		default:
 			b, err := afr.reader.ReadBytes('\n')

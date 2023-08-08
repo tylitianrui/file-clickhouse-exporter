@@ -10,6 +10,7 @@ const StaticFileReaderBuffSize = 1 << 4
 
 // StaticFileReader  reader static file.
 type StaticFileReader struct {
+	fd        *os.File
 	reader    *bufio.Reader
 	fileLines chan FileLineGetter
 }
@@ -22,6 +23,7 @@ func NewStaticFileReader(filename string) (XReader, error) {
 
 	bufioReader := bufio.NewReader(fd)
 	fileReader := &StaticFileReader{
+		fd:        fd,
 		reader:    bufioReader,
 		fileLines: make(chan FileLineGetter, StaticFileReaderBuffSize),
 	}
@@ -33,6 +35,7 @@ func (fr *StaticFileReader) readLines(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			close(fr.fileLines)
+			fr.fd.Close()
 			return
 		default:
 			b, err := fr.reader.ReadBytes('\n')
