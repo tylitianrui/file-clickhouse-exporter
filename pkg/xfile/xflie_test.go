@@ -34,7 +34,7 @@ func TestFileReader_ReadLine(t *testing.T) {
 				a.NoError(c.Error())
 			}
 		}
-		if i > 11 {
+		if i > 12 {
 			cancel()
 		}
 		i++
