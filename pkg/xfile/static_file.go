@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-const BuffSize = 1 << 4
+const StaticFileReaderBuffSize = 1 << 4
 
 // StaticFileReader  reader static file.
 type StaticFileReader struct {
@@ -14,7 +14,7 @@ type StaticFileReader struct {
 	fileLines chan FileLineGetter
 }
 
-func NewFileReader(filename string) (*StaticFileReader, error) {
+func NewStaticFileReader(filename string) (XReader, error) {
 	fd, err := os.OpenFile(filename, os.O_RDONLY, 0666)
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func NewFileReader(filename string) (*StaticFileReader, error) {
 	bufioReader := bufio.NewReader(fd)
 	fileReader := &StaticFileReader{
 		reader:    bufioReader,
-		fileLines: make(chan FileLineGetter, BuffSize),
+		fileLines: make(chan FileLineGetter, StaticFileReaderBuffSize),
 	}
 	return fileReader, nil
 }

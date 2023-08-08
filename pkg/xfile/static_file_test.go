@@ -19,7 +19,7 @@ var (
 func TestFileReader_ReadLine(t *testing.T) {
 	a := assert.New(t)
 	filename := "../../test/test_read_line"
-	reader, err := NewFileReader(filename)
+	reader, err := NewStaticFileReader(filename)
 	a.NoError(err)
 	ctx, cancel := context.WithCancel(context.Background())
 	content := reader.ReadLines(ctx)
