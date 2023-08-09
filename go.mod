@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.12.0
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cast v1.3.0
@@ -16,7 +17,6 @@ require (
 	github.com/ClickHouse/ch-go v0.58.0 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.6.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect

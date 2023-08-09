@@ -72,7 +72,12 @@ func TestAppendingFileAppendReader_Watch(t *testing.T) {
 		}
 	}()
 
-	// ctx, cancel := context.WithCancel(context.Background())
-	// appendReader.Watch()
+	ctx, _ := context.WithCancel(context.Background())
+	appendReader.Watch(filename)
+	events := appendReader.Events(ctx)
+	for evt := range events {
+		evt.FileName()
+
+	}
 
 }

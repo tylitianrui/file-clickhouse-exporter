@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -12,6 +13,7 @@ import (
 )
 
 const AppendingFileReaderBuffSize = 1 << 4
+const EventsBuffSize = 1 << 4
 
 var (
 	waitAppendingDuration = 100 * time.Millisecond
@@ -23,7 +25,7 @@ type AppendingFileAppendReader struct {
 	reader        *bufio.Reader
 	fileLines     chan FileLineGetter
 	watcher       *fsnotify.Watcher
-	fileEvents    chan FileEventGetter
+	fileEvents    chan EventGetter
 }
 
 func NewAppendingFileAppendReader(filename string) (XWatchReader, error) {
@@ -40,10 +42,11 @@ func NewAppendingFileAppendReader(filename string) (XWatchReader, error) {
 	}
 
 	afr := &AppendingFileAppendReader{
-		fd:        fd,
-		reader:    bufioReader,
-		fileLines: make(chan FileLineGetter, AppendingFileReaderBuffSize),
-		watcher:   watcher,
+		fd:         fd,
+		reader:     bufioReader,
+		fileLines:  make(chan FileLineGetter, AppendingFileReaderBuffSize),
+		watcher:    watcher,
+		fileEvents: make(chan EventGetter, EventsBuffSize),
 	}
 	return afr, nil
 }
@@ -108,6 +111,46 @@ func (afr *AppendingFileAppendReader) Watch(fileName string) error {
 	return afr.watcher.Add(fileName)
 }
 
-func (afr *AppendingFileAppendReader) Events() chan FileEventGetter {
+func (afr *AppendingFileAppendReader) Events(ctx context.Context) chan EventGetter {
+	go afr.watchEvents(ctx)
 	return afr.fileEvents
+}
+
+func (afr *AppendingFileAppendReader) watchEvents(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			close(afr.fileLines)
+			afr.fd.Close()
+			return
+		default:
+			select {
+			case evt, ok := <-afr.watcher.Events:
+				if !ok {
+					return
+				}
+				switch evt.Op {
+				// append new data
+				case fsnotify.Write:
+					fileEvt := &FileEventGetter{
+						evt: evt,
+					}
+					afr.fileEvents <- fileEvt
+
+				default:
+					fileEvt := &FileEventGetter{
+						evt: evt,
+					}
+					fmt.Println(evt)
+					afr.fileEvents <- fileEvt
+
+				}
+
+			case err := <-afr.watcher.Errors:
+				fileEvt := &FileEventGetter{err: err}
+				afr.fileEvents <- fileEvt
+			}
+		}
+	}
+
 }

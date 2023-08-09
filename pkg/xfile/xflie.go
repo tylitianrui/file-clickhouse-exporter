@@ -2,6 +2,8 @@ package xfile
 
 import (
 	"context"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 type XReader interface {
@@ -10,11 +12,13 @@ type XReader interface {
 
 type XWatchReader interface {
 	Watch(fileName string) error
-	Events() chan FileEventGetter
+	Events(ctx context.Context) chan EventGetter
 	XReader
 }
 
 type EventGetter interface {
+	FileName() string
+	Operation() string
 }
 type FileLineGetter interface {
 	Line() []byte
@@ -33,4 +37,15 @@ func (fl *FileLine) Error() error {
 	return fl.err
 }
 
-type FileEventGetter struct{}
+type FileEventGetter struct {
+	evt fsnotify.Event
+	err error
+}
+
+func (f *FileEventGetter) FileName() string {
+	return f.evt.Name
+}
+
+func (f *FileEventGetter) Operation() string {
+	return f.evt.Op.String()
+}
