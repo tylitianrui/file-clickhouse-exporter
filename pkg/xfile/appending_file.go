@@ -23,9 +23,10 @@ type AppendingFileAppendReader struct {
 	reader        *bufio.Reader
 	fileLines     chan FileLineGetter
 	watcher       *fsnotify.Watcher
+	fileEvents    chan FileEventGetter
 }
 
-func NewAppendingFileAppendReader(filename string) (XReader, error) {
+func NewAppendingFileAppendReader(filename string) (XWatchReader, error) {
 	fd, err := os.OpenFile(filename, os.O_RDONLY, 0666)
 	if err != nil {
 		return nil, err
@@ -101,4 +102,12 @@ func (afr *AppendingFileAppendReader) setCursorBack(n int) error {
 	afr.currentCursor = offset
 	afr.reader.Reset(afr.fd)
 	return nil
+}
+
+func (afr *AppendingFileAppendReader) Watch(fileName string) error {
+	return afr.watcher.Add(fileName)
+}
+
+func (afr *AppendingFileAppendReader) Events() chan FileEventGetter {
+	return afr.fileEvents
 }
