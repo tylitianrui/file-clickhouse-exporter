@@ -37,7 +37,7 @@ func main() {
 	events := appendReader.Events(ctx)
 	for evt := range events {
 		fmt.Println("file:", evt.FileName())
-		fmt.Println("operation:", evt.Operation())
+		fmt.Println("operation:", evt.Operation().String())
 
 	}
 

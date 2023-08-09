@@ -6,6 +6,33 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+type Operation uint32
+
+const (
+	Create Operation = 1 << iota
+	Write
+	Remove
+	Rename
+	Chmod
+)
+
+func (op Operation) String() string {
+	switch op {
+	case Create:
+		return "CREATE"
+	case Write:
+		return "WRITE"
+	case Remove:
+		return "REMOVE"
+	case Rename:
+		return "RENAME"
+	case Chmod:
+		return "CHMOD"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 type XReader interface {
 	ReadLines(ctx context.Context) chan FileLineGetter
 }
@@ -18,7 +45,7 @@ type XWatchReader interface {
 
 type EventGetter interface {
 	FileName() string
-	Operation() string
+	Operation() Operation
 }
 type FileLineGetter interface {
 	Line() []byte
@@ -46,6 +73,8 @@ func (f *FileEventGetter) FileName() string {
 	return f.evt.Name
 }
 
-func (f *FileEventGetter) Operation() string {
-	return f.evt.Op.String()
+func (f *FileEventGetter) Operation() Operation {
+	op := Operation(f.evt.Op)
+	return op
+
 }
