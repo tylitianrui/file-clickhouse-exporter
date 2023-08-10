@@ -161,6 +161,9 @@ func (afr *AppendingFileAppendReader) readLines(ctx context.Context) {
 					afr.fileLines <- line
 				}
 			}
+			// record offset
+			currentOffset, _ := afr.fd.Seek(0, io.SeekCurrent)
+			afr.currentCursor = currentOffset
 			line := &FileLine{
 				line: b,
 				err:  err,
@@ -168,7 +171,11 @@ func (afr *AppendingFileAppendReader) readLines(ctx context.Context) {
 			afr.fileLines <- line
 		}
 	}
+}
 
+// current  offset
+func (afr *AppendingFileAppendReader) CurrentCursor() int64 {
+	return afr.currentCursor
 }
 
 func (afr *AppendingFileAppendReader) setCursorBack(n int) error {
