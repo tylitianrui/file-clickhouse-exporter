@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	aggregationStrJoinRegex = regexp.MustCompile(`((\$\d+)(\[(\d*):(\d*)\])?(\+\"(.*?)\"\+)?)`)
+	aggregationStrJoinRegex = regexp.MustCompile(`((\$\d+)(\[-?(\d*):(-?\d*)\])?(\+\"(.*?)\"\+)?)`)
 )
 
 type Aggregator interface {
