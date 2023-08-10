@@ -59,81 +59,114 @@ func NewAppendingFileAppendReader(filename string) (XWatchReader, error) {
 
 func (afr *AppendingFileAppendReader) ReadLines(ctx context.Context) chan FileLineGetter {
 	go afr.readLines(ctx)
-	for evt := range afr.Events(ctx) {
-		switch evt.Operation() {
-		case Chmod, Write:
-			fd, err := afr.fd.Stat()
-			if err != nil {
-				switch {
-				// file does not exist
-				case os.IsNotExist(err):
-					if err := afr.reWatch(); err != nil {
-						line := &FileLine{
-							err: FatalError,
+	afr.Watch(afr.filename)
+	go func() {
+		for {
+			select {
+			case evt := <-afr.Events(ctx):
+				switch evt.Operation() {
+				case Chmod, Write:
+					fd, err := afr.fd.Stat()
+					if err != nil {
+						switch {
+						// file does not exist
+						case os.IsNotExist(err):
+							if err := afr.reWatch(); err != nil {
+								line := &FileLine{
+									err: FatalError,
+								}
+								afr.fileLines <- line
+							}
+
+						//  file does exist
+						case !os.IsNotExist(err):
+							line := &FileLine{
+								err: FatalError,
+							}
+							afr.fileLines <- line
 						}
-						afr.fileLines <- line
-					}
 
-				//  file does  exist
-				case !os.IsNotExist(err):
+					}
+					if afr.currentCursor > fd.Size() {
+						afr.currentCursor, err = afr.fd.Seek(0, io.SeekStart)
+						if err != nil {
+							line := &FileLine{
+								err: FatalError,
+							}
+							afr.fileLines <- line
+						}
+
+						afr.reader.Reset(afr.fd)
+					}
+				default:
+					fmt.Println("default", evt)
+				}
+			case <-time.After(1 * time.Second):
+				fi1, err := afr.fd.Stat()
+				if err != nil && !os.IsNotExist(err) {
 					line := &FileLine{
 						err: FatalError,
 					}
 					afr.fileLines <- line
 				}
 
-			}
-			if afr.currentCursor > fd.Size() {
-				afr.currentCursor, err = afr.fd.Seek(0, io.SeekStart)
-				if err != nil {
+				fi2, err := os.Stat(afr.filename)
+				if err != nil && !os.IsNotExist(err) {
 					line := &FileLine{
 						err: FatalError,
 					}
 					afr.fileLines <- line
 				}
 
-				afr.reader.Reset(afr.fd)
+				if os.SameFile(fi1, fi2) {
+					continue
+				}
+				if err := afr.reWatch(); err != nil {
+					line := &FileLine{
+						err: FatalError,
+					}
+					afr.fileLines <- line
+				}
 			}
+
 		}
-	}
+	}()
 	return afr.fileLines
 }
 
 func (afr *AppendingFileAppendReader) readLines(ctx context.Context) {
-	for {
-		for {
-			select {
-			case <-ctx.Done():
-				close(afr.fileLines)
-				afr.watcher.Close()
-				afr.fd.Close()
-				return
-			default:
-				b, err := afr.reader.ReadBytes('\n')
-				if err != nil {
-					// if we encounter EOF before a line delimiter
-					// rewind cursor position, and wait for further file changes.
-					if err == io.EOF {
-						afr.setCursorBack(len(b))
-						// todo:wait for file appending
-						time.Sleep(waitAppendingDuration)
-						continue
-					} else {
-						// other errors
-						line := &FileLine{
-							err: err,
-						}
-						afr.fileLines <- line
-					}
-				}
-				line := &FileLine{
-					line: b,
-					err:  err,
-				}
-				afr.fileLines <- line
-			}
-		}
 
+	for {
+		select {
+		case <-ctx.Done():
+			close(afr.fileLines)
+			afr.watcher.Close()
+			afr.fd.Close()
+			return
+		default:
+			b, err := afr.reader.ReadBytes('\n')
+			if err != nil {
+				// if we encounter EOF before a line delimiter
+				// rewind cursor position, and wait for further file changes.
+				if err == io.EOF {
+					afr.setCursorBack(len(b))
+					// todo:wait for file appending
+					time.Sleep(waitAppendingDuration)
+					continue
+				} else {
+					// other errors
+					line := &FileLine{
+						err: err,
+					}
+					afr.fileLines <- line
+				}
+			}
+			line := &FileLine{
+				line: b,
+				err:  err,
+			}
+			afr.fileLines <- line
+		}
 	}
 
 }
@@ -199,6 +232,7 @@ func (afr *AppendingFileAppendReader) watchEvents(ctx context.Context) {
 			select {
 			case evt, ok := <-afr.watcher.Events:
 				if !ok {
+					fmt.Println("ok", ok)
 					return
 				}
 				switch evt.Op {
@@ -213,7 +247,7 @@ func (afr *AppendingFileAppendReader) watchEvents(ctx context.Context) {
 					fileEvt := &FileEventGetter{
 						evt: evt,
 					}
-					fmt.Println(evt)
+					fmt.Println("raw", evt)
 					afr.fileEvents <- fileEvt
 
 				}
