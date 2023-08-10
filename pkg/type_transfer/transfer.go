@@ -14,7 +14,7 @@ func String2Int32(s string) int32 {
 	return cast.ToInt32(s)
 }
 
-func String2Int15(s string) int16 {
+func String2Int16(s string) int16 {
 	return cast.ToInt16(s)
 }
 func String2UInt64(s string) uint64 {

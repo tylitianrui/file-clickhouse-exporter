@@ -57,6 +57,15 @@ type Preprocessing struct {
 	columnsConfig       map[string]string                 // config.yaml
 	aggregations        map[string]aggregation.Aggregator //
 	readIndexInFile     []string
+	resultIdx           []ResultIdx
+	columns             []string
+}
+
+type ResultIdx struct {
+	Key        string
+	Source     string
+	SourceKey  string
+	SourceType string
 }
 
 func NewPreprocessor() *Preprocessing {
@@ -65,6 +74,8 @@ func NewPreprocessor() *Preprocessing {
 		columnsConfig:       map[string]string{},
 		aggregations:        make(map[string]aggregation.Aggregator),
 		readIndexInFile:     make([]string, 0),
+		resultIdx:           []ResultIdx{},
+		columns:             []string{},
 	}
 	return preprocessor
 }
@@ -99,7 +110,8 @@ func (p *Preprocessing) LoadConfig() error {
 	if len(p.preprocessingConfig) == 0 {
 		return errors.New("err: have not  run `SetPreprocessingConfig` yet")
 	}
-	for _, cnf := range p.columnsConfig {
+	for k, cnf := range p.columnsConfig {
+		p.columns = append(p.columns, k)
 		res, err := columnsAggregator.ParseRule(cnf)
 		if err != nil {
 			return err
@@ -128,7 +140,9 @@ func (p *Preprocessing) LoadConfig() error {
 		if len(columnType) == 0 {
 			columnType = "string"
 		}
-		if preprocessingSource == PreprocessorAggregation {
+
+		switch preprocessingSource {
+		case PreprocessorAggregation:
 			aggregationRule := p.preprocessingConfig[preprocessingSource][preprocessingSourceKey]
 			strJoinAggregation := aggregation.NewStrJoinAggregation()
 			rules, _ := strJoinAggregation.ParseRule(aggregationRule)
@@ -140,6 +154,37 @@ func (p *Preprocessing) LoadConfig() error {
 				idx := rule[0]
 				readColumnsSet.Add(idx)
 			}
+			resIdx := ResultIdx{
+				Key:        k,
+				Source:     preprocessingSource,
+				SourceKey:  preprocessingSourceKey,
+				SourceType: columnType,
+			}
+			p.resultIdx = append(p.resultIdx, resIdx)
+		case PreprocessorDynamic:
+			resIdx := ResultIdx{
+				Key:        k,
+				Source:     preprocessingSource,
+				SourceKey:  preprocessingSourceKey,
+				SourceType: columnType,
+			}
+			p.resultIdx = append(p.resultIdx, resIdx)
+		case PreprocessorStatic:
+			resIdx := ResultIdx{
+				Key:        k,
+				Source:     preprocessingSource,
+				SourceKey:  preprocessingSourceKey,
+				SourceType: columnType,
+			}
+			p.resultIdx = append(p.resultIdx, resIdx)
+		default:
+			resIdx := ResultIdx{
+				Key:        k,
+				Source:     PreprocessorRaw,
+				SourceKey:  rawIndex,
+				SourceType: columnType,
+			}
+			p.resultIdx = append(p.resultIdx, resIdx)
 		}
 	}
 	setItems := readColumnsSet.AllItems()
@@ -161,4 +206,22 @@ func (p *Preprocessing) Do(data map[string]string) map[string]string {
 		result[k] = resItem
 	}
 	return result
+}
+
+func (p *Preprocessing) ResultIdx() []ResultIdx {
+	return p.resultIdx
+}
+
+func (p *Preprocessing) Columns() []string {
+	return p.columns
+}
+
+func (p *Preprocessing) ColumnsResult(result map[string]interface{}) []interface{} {
+	res := []interface{}{}
+	for _, column := range p.columns {
+		val := result[column]
+		res = append(res, val)
+
+	}
+	return res
 }

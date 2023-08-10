@@ -27,7 +27,7 @@ func TestAppendingFileAppendReader_Read(t *testing.T) {
 	go func() {
 		for i := 0; i < 50; i++ {
 			l := fmt.Sprintf("%d\n", i)
-			time.Sleep(20 * time.Millisecond)
+			// time.Sleep(20 * time.Microsecond)
 			fd.WriteString(l)
 		}
 	}()

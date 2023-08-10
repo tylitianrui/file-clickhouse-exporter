@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/tylitianrui/file-clickhouse-exporter/internal/preprocessing"
 	"github.com/tylitianrui/file-clickhouse-exporter/pkg/config"
 )
 
@@ -38,18 +37,6 @@ var testCmd = &cobra.Command{
 		fmt.Println("config load [ok]")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		preprocessor := preprocessing.NewPreprocessor()
-		columns := []string{}
-		for _, v := range config.C.ClickHouse.Columns {
-			columns = append(columns, v)
-
-		}
-		preprocessor.SetReadColumns(columns)
-		// for k, v := range config.C.ClickHouse.Preprocessing {
-		// 	preprocessor.SetProcessorLogic(k, v)
-		// }
-		preprocessor.SetProcessing(config.C.ClickHouse.Preprocessing)
-		preprocessor.Load()
-
+		fmt.Println("test")
 	},
 }

@@ -115,4 +115,5 @@ type Setting struct {
 	FilePath         string `yaml:"file_path" mapstructure:"file_path"`
 	MaxlineEveryRead int    `yaml:"max_line_every_read" mapstructure:"max_line_every_read"`
 	Interval         int    `yaml:"interval" mapstructure:"interval"`
+	Mode             string `json:"mode,omitempty" yaml:"mode" mapstructure:"mode"`
 }
