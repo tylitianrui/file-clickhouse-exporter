@@ -3,15 +3,11 @@ package preprocessing
 import (
 	"errors"
 	"fmt"
-	"io"
 	"regexp"
 	"sync"
-	"time"
 
 	"github.com/tylitianrui/file-clickhouse-exporter/pkg/aggregation"
 	"github.com/tylitianrui/file-clickhouse-exporter/pkg/collector"
-	"github.com/tylitianrui/file-clickhouse-exporter/pkg/file_parser"
-	"github.com/tylitianrui/file-clickhouse-exporter/pkg/xfile"
 )
 
 const (
@@ -56,165 +52,113 @@ type Preprocessor interface {
 */
 // Preprocessor
 type Preprocessing struct {
-	rawColumns               []string                     // raw configuration. eg:$1(time_utc),aggregation.key1
-	readInxFromPreprocessing map[string]map[string]string // map[raw] = { map[$1] = time_utc} ,map[aggregation] = { map[key1] = string}
-	processingConfiguration  map[string]map[string]string // processing configuration
-	readIdxFromFile          []string
-	reader                   *xfile.FileReader  // file  reader
-	parser                   file_parser.Parser // content parser
-	content                  chan map[string]string
-	aggregation              map[string][]string
-	mu                       sync.Mutex
+	mu                  sync.Mutex
+	preprocessingConfig map[string]map[string]string      // config.yaml
+	columnsConfig       map[string]string                 // config.yaml
+	aggregations        map[string]aggregation.Aggregator //
+	readIndexInFile     []string
 }
 
 func NewPreprocessor() *Preprocessing {
 	preprocessor := &Preprocessing{
-		rawColumns: []string{},
-		readInxFromPreprocessing: map[string]map[string]string{
-			PreprocessorRaw:         {},
-			PreprocessorAggregation: {},
-			PreprocessorStatic:      {},
-			PreprocessorDynamic:     {},
-		},
-		processingConfiguration: map[string]map[string]string{},
-		content:                 make(chan map[string]string, BuffSize),
-		aggregation:             make(map[string][]string),
+		preprocessingConfig: map[string]map[string]string{},
+		columnsConfig:       map[string]string{},
+		aggregations:        make(map[string]aggregation.Aggregator),
+		readIndexInFile:     make([]string, 0),
 	}
 	return preprocessor
 }
 
-// SetFile 设置文件和解析类型.
-func (p *Preprocessing) SetFile(fileName string, parserType string) error {
-	reader, err := xfile.NewFileReader(fileName)
-	if err != nil {
-		return err
+// config.yaml  option preprocessing
+func (p *Preprocessing) SetPreprocessingConfig(cnf map[string]map[string]string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for k, _ := range cnf {
+		if collector.IndexInStringArray(k, preprocessingTyps) < 0 {
+			msg := fmt.Sprintf("config option err:%s is unknown", k)
+			return errors.New(msg)
+		}
 	}
-	p.reader = reader
-	parser, exist := file_parser.DefaultParserController.GetParser(parserType)
-	if !exist {
-		return errors.New("parser[" + parserType + "] does not  exist")
-	}
-	p.parser = parser
+	p.preprocessingConfig = cnf
 	return nil
 }
 
 func (p *Preprocessing) SetColumns(columns map[string]string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.rawColumns = p.rawColumns[:0]
-	for _, v := range columns {
-		p.rawColumns = append(p.rawColumns, v)
+	p.columnsConfig = columns
+}
+
+func (p *Preprocessing) LoadConfig() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	readColumnsSet := collector.NewSet() // 在文件中读取的索引
+	if len(p.columnsConfig) == 0 {
+		return errors.New("err: have not  run `SetColumns` yet")
 	}
-}
-
-func (p *Preprocessing) SetReadColumns(columns []string) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.rawColumns = append(p.rawColumns[:0], columns...)
-}
-
-func (p *Preprocessing) SetProcessing(processing map[string]map[string]string) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.processingConfiguration = processing
-}
-
-func (p *Preprocessing) Load() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	set := collector.NewSet()
-	// 加载数据索引
-	for _, v := range p.rawColumns {
-		res := columnsAggregator.Parse(v)
+	if len(p.preprocessingConfig) == 0 {
+		return errors.New("err: have not  run `SetPreprocessingConfig` yet")
+	}
+	for _, cnf := range p.columnsConfig {
+		res, err := columnsAggregator.ParseRule(cnf)
+		if err != nil {
+			return err
+		}
 		if len(res) == 0 {
-			panic("configure err:" + v)
+			panic("configure err:" + cnf)
 		}
 		configure := res[0]
 		if len(configure) != 10 {
-			panic("configure err:" + v)
+			panic("configure err:" + cnf)
 		}
-		rawKey := configure[2]
+
+		// columns[time]: $1(time)
+		// rawIndex $1
+		rawIndex := configure[2]
+		if rawIndex != "" {
+			readColumnsSet.Add(rawIndex)
+		}
+
+		//  name: aggregation.key1
+		//  preprocessingSource= aggregation
+		//  preprocessingSourceKey=key1
 		preprocessingSource := configure[3]
 		preprocessingSourceKey := configure[7]
 		columnType := configure[9]
 		if len(columnType) == 0 {
 			columnType = "string"
 		}
-		if len(rawKey) > 0 {
-			p.readInxFromPreprocessing[PreprocessorRaw][rawKey] = columnType
-			set.Add(rawKey)
-
-		} else if len(preprocessingSource) > 0 {
-			p.readInxFromPreprocessing[preprocessingSource][preprocessingSourceKey] = columnType
-		}
-	}
-
-	// 检查 期望读取的预处理数据是否在配置中
-	for _, preprocessingTyp := range preprocessingTyps {
-		for expectKey, _ := range p.readInxFromPreprocessing[preprocessingTyp] {
-			var contain bool
-			for containKey, _ := range p.readInxFromPreprocessing[preprocessingTyp] {
-				if containKey == expectKey {
-					contain = true
+		if preprocessingSource == PreprocessorAggregation {
+			aggregationRule := p.preprocessingConfig[preprocessingSource][preprocessingSourceKey]
+			strJoinAggregation := aggregation.NewStrJoinAggregation()
+			rules, _ := strJoinAggregation.ParseRule(aggregationRule)
+			p.aggregations[preprocessingSourceKey] = strJoinAggregation
+			for _, rule := range rules {
+				if len(rule) == 0 {
+					return errors.New("")
 				}
-
-			}
-			if !contain {
-				msg := fmt.Sprintf("configuration[%s] does not  contain key[%s]", PreprocessorAggregation, expectKey)
-				panic(msg)
+				idx := rule[0]
+				readColumnsSet.Add(idx)
 			}
 		}
 	}
-
-	// 配置中存在aggregation 并且会在aggregation中读取数据
-	aggregations, ok := p.processingConfiguration[PreprocessorAggregation]
-	if ok && len(p.readInxFromPreprocessing[PreprocessorAggregation]) > 0 {
-		for k, v := range aggregations {
-			if _, exist := p.readInxFromPreprocessing[PreprocessorAggregation][k]; exist {
-				configs := strJoinAggregation.Parse(v)
-				aggregation := []string{}
-				for _, config := range configs {
-					idx := config[2]
-					from := config[4]
-					to := config[5]
-					joinstr := config[7]
-					aggregation = append(aggregation, idx, from, to, joinstr)
-					set.Add(idx)
-				}
-				p.aggregation[k] = aggregation
-			}
-		}
+	setItems := readColumnsSet.AllItems()
+	for _, item := range setItems {
+		i := item.(string)
+		p.readIndexInFile = append(p.readIndexInFile, i)
 	}
-
-	p.readIdxFromFile = p.readIdxFromFile[:0]
-	for _, item := range set.AllItems() {
-		p.readIdxFromFile = append(p.readIdxFromFile, item.(string))
-	}
+	return nil
 }
 
-func (p *Preprocessing) ColumnsIndex() []string {
-	return p.readIdxFromFile
+func (p *Preprocessing) GetIndexOfFile() []string {
+	return p.readIndexInFile
 }
 
-func (p *Preprocessing) readFromFile(interval time.Duration) {
-	p.parser.SetFormat(p.ColumnsIndex())
-	for {
-		time.Sleep(interval)
-		b, err := p.reader.ReadLine()
-		if err != nil {
-			if err == io.EOF {
-				close(p.content)
-				break
-			}
-		}
-		res := p.parser.Parse(string(b))
-		// 预处理
-
-		p.content <- res
+func (p *Preprocessing) Do(data map[string]string) map[string]string {
+	result := make(map[string]string)
+	for k, v := range p.aggregations {
+		resItem, _ := v.Aggregate(data)
+		result[k] = resItem
 	}
-}
-
-func (p *Preprocessing) Read(interval time.Duration) chan map[string]string {
-	go p.readFromFile(interval)
-	return p.content
+	return result
 }
