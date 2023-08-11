@@ -20,6 +20,15 @@ func String2Int16(s string) int16 {
 func String2UInt64(s string) uint64 {
 	return cast.ToUint64(s)
 }
+
+func String2Float64(s string) float64 {
+	return cast.ToFloat64(s)
+}
+
+func String2Float32(s string) float32 {
+	return cast.ToFloat32(s)
+}
+
 func String2Time(s string) time.Time {
 	t, _ := StringToTimeWithLocation(s, time.Local)
 	return t

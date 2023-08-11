@@ -52,9 +52,13 @@ func (r *Result) Result(index []ResultIdx) map[string]interface{} {
 				res[resultIdx.Key] = type_transfer.String2Int32(val)
 			case "int64":
 				res[resultIdx.Key] = type_transfer.String2Int64(val)
+			case "float32":
+				res[resultIdx.Key] = type_transfer.String2Float32(val)
+			case "float64":
+				res[resultIdx.Key] = type_transfer.String2Float64(val)
 			case "time":
 				res[resultIdx.Key] = type_transfer.String2Time(val)
-			case "time_utc":
+			case "time_utc": // todo
 				res[resultIdx.Key] = type_transfer.String2TimeUTC(val)
 			default:
 				res[resultIdx.Key] = val
