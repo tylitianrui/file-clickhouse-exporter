@@ -14,8 +14,8 @@ func init() {
 var versionCmd = &cobra.Command{
 	Use:     "version",
 	Aliases: []string{"v"},
-	Short:   "print the version number of file-clickhouse-exporter",
-	Long:    `All software has versions. This is the version number of file-clickhouse-exporter`,
+	Short:   "print the version number of file-clickhouse-exporter. usage:`file-clickhouse-exporter version`",
+	Long:    "All software has versions. This is the version number of file-clickhouse-exporter. usage:`file-clickhouse-exporter version`",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(internal.VERSION)
 	},

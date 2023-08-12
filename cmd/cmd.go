@@ -7,7 +7,9 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "file-clickhouse-exporter",
 	Short: "file-clickhouse-exporter",
-	Run:   func(cmd *cobra.Command, args []string) {},
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
 }
 
 func Execute() error {

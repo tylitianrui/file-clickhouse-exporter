@@ -25,8 +25,8 @@ func init() {
 var runCmd = &cobra.Command{
 	Use: "run",
 
-	Short: "read file and insert db",
-	Long:  `read file and insert clickhouse`,
+	Short: "read file and insert clickhouse, usage:`file-clickhouse-exporter run`",
+	Long:  "read file and insert clickhouse, usage:`file-clickhouse-exporter run`",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// 初始化配置
 		cnf := config.Default()

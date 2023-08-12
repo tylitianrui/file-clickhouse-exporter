@@ -23,8 +23,8 @@ func init() {
 var testCmd = &cobra.Command{
 	Use: "test",
 
-	Short: "print content to be write",
-	Long:  `print content to be write`,
+	Short: "print content to be write, usage:`file-clickhouse-exporter test`",
+	Long:  "print content to be write, usage:`file-clickhouse-exporter test`",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// 初始化配置
 		cnf := config.Default()
@@ -44,7 +44,6 @@ var testCmd = &cobra.Command{
 		fmt.Println("config load [ok]")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		start := time.Now().Unix()
 		clickHouseConfig := config.C.ClickHouse
 		dbConfig := repo.ClickhouseRepoConfig{
 			Host:     clickHouseConfig.Host,
