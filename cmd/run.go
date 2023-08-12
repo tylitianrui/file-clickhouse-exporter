@@ -25,8 +25,8 @@ func init() {
 var runCmd = &cobra.Command{
 	Use: "run",
 
-	Short: "print the version number of file-clickhouse-exporter",
-	Long:  `All software has versions. This is the version number of file-clickhouse-exporter`,
+	Short: "read file and insert db",
+	Long:  `read file and insert clickhouse`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// 初始化配置
 		cnf := config.Default()

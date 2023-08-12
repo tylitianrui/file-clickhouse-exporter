@@ -23,8 +23,8 @@ func init() {
 var testCmd = &cobra.Command{
 	Use: "test",
 
-	Short: "print the version number of file-clickhouse-exporter",
-	Long:  `All software has versions. This is the version number of file-clickhouse-exporter`,
+	Short: "print content to be write",
+	Long:  `print content to be write`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// 初始化配置
 		cnf := config.Default()
@@ -44,6 +44,7 @@ var testCmd = &cobra.Command{
 		fmt.Println("config load [ok]")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		start := time.Now().Unix()
 		clickHouseConfig := config.C.ClickHouse
 		dbConfig := repo.ClickhouseRepoConfig{
 			Host:     clickHouseConfig.Host,
@@ -118,9 +119,9 @@ var testCmd = &cobra.Command{
 			}
 		}()
 		for line := range lines {
-			fmt.Println("line")
 			result := preprocessing.NewResult()
-			data := parser.Parse(string(line.Line()))
+			l := string(line.Line())
+			data := parser.Parse(l)
 			result.SetRaw(data)
 			aggregations := preprocessor.Do(data)
 			result.SetAggregation(aggregations)
