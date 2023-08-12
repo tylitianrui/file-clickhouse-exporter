@@ -1,0 +1,37 @@
+clickhouse:
+  db:   <database_name>   # clickhouse database
+  table: <table_name>     # clickhouse table
+  host: localhost         # clickhouse host
+  port: 9000              # clickhouse port
+  credentials: 
+    user: default         # clickhouse user
+    password:             # clickhouse password
+  columns:
+    id: dynamic.id
+    user: aggregation.user
+    age: $3(int64)
+    gender: $4
+    game: $5
+    score: $6(float64)
+    game_start: aggregation.gameStart(time)
+    game_end: aggregation.gameEnd(time)
+  Preprocessing:
+    aggregation:
+      user: $1[10:]+" "+$2[11:]    
+      gameStart: $7[1:-1]
+      gameEnd: $8[1:-1]
+    static:
+      static_val1: olympic
+    dynamic:
+      id: gen_uuid()
+
+
+
+
+setting:
+  file_path: <your>/<file>/<path>
+  max_line_every_read: 200
+  interval: 10  # in milliseconds(ms)
+  mode: follower   # optional, default:static
+
+
