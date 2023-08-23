@@ -25,7 +25,7 @@ var testCmd = &cobra.Command{
 
 	Short: "print content to be write, usage:`file-clickhouse-exporter test`",
 	Long:  "print content to be write, usage:`file-clickhouse-exporter test`",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		// 初始化配置
 		cnf := config.Default()
 		cnf.SetCnfFileName(configPath)
@@ -98,7 +98,10 @@ var testCmd = &cobra.Command{
 					if len(vals) > 0 {
 						mu.Lock()
 						err := db.BatchInsert(context.Background(), clickHouseConfig.Table, columns, vals, false)
-						fmt.Println(err)
+						if err != nil {
+							fmt.Println(err)
+						}
+
 						num = 0
 						vals = vals[:0]
 						mu.Unlock()
@@ -107,7 +110,9 @@ var testCmd = &cobra.Command{
 					if num >= config.C.Setting.MaxlineEveryRead && len(vals) > 0 {
 						mu.Lock()
 						err := db.BatchInsert(context.Background(), clickHouseConfig.Table, columns, vals, false)
-						fmt.Println(err)
+						if err != nil {
+							fmt.Println(err)
+						}
 						num = 0
 						vals = vals[:0]
 						mu.Unlock()

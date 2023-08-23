@@ -27,7 +27,7 @@ var runCmd = &cobra.Command{
 
 	Short: "read file and insert clickhouse, usage:`file-clickhouse-exporter run`",
 	Long:  "read file and insert clickhouse, usage:`file-clickhouse-exporter run`",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		// 初始化配置
 		cnf := config.Default()
 		cnf.SetCnfFileName(configPath)
@@ -102,6 +102,7 @@ var runCmd = &cobra.Command{
 						err := db.BatchInsert(context.Background(), clickHouseConfig.Table, columns, vals, false)
 						fmt.Println(err)
 						num = 0
+
 						vals = vals[:0]
 						mu.Unlock()
 					}
