@@ -116,4 +116,5 @@ type Setting struct {
 	MaxlineEveryRead int    `yaml:"max_line_every_read" mapstructure:"max_line_every_read"`
 	Interval         int    `yaml:"interval" mapstructure:"interval"`
 	Mode             string `json:"mode,omitempty" yaml:"mode" mapstructure:"mode"`
+	Separator        string `json:"separator,omitempty" yaml:"separator" gorm:"separator" mapstructure:"separator"`
 }
